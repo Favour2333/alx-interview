@@ -30,8 +30,8 @@ for line in sys.stdin:
         parts = line.split()
         ip_address = parts[0]
         date = parts[3][1:-1]  # Corrected the date extraction
-        status_code = int(parts[8])
-        file_size = int(parts[9])
+        status_code = int(parts[-2])  # Modified to extract the last but one element
+        file_size = int(parts[-1])  # Modified to extract the last element
     except IndexError:
         continue
     except (ValueError, IndexError):
@@ -39,7 +39,8 @@ for line in sys.stdin:
 
     # Update the metrics
     total_file_size += file_size
-    status_code_counts[status_code] += 1
+    if status_code in status_code_counts:
+        status_code_counts[status_code] += 1
     lines_processed += 1
 
     # Print statistics every 10 lines
