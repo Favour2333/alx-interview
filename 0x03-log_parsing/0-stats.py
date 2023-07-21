@@ -1,25 +1,37 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 import sys
+
+def print_metrics(total_file_size, status_codes):
+    print("File size: {}".format(total_file_size))
+    for status_code in sorted(status_codes):
+        print("{}: {}".format(status_code, status_codes[status_code]))
+
 def main():
-    """Main function."""
-    total_size = 0
+    total_file_size = 0
     status_codes = {}
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            ip_address, date, method, status_code, file_size = line.split()
-        except ValueError:
-            continue
-        total_size += int(file_size)
-        status_codes[status_code] = status_codes.get(status_code, 0) + 1
-        if len(status_codes) % 10 == 0 or sys.stdin.isatty():
-            print("File size:", total_size)
-            for status_code, number in sorted(status_codes.items()):
-                print(status_code, number)
-    print("File size:", total_size)
-    for status_code, number in sorted(status_codes.items()):
-        print(status_code, number)
+
+    try:
+        for idx, line in enumerate(sys.stdin, 1):
+            data = line.split()
+
+            # Check if the line matches the input format
+            if len(data) != 9 or data[8].isdigit() is False:
+                continue
+
+            file_size = int(data[8])
+            total_file_size += file_size
+
+            status_code = data[7]
+            if status_code in ['200', '301', '400', '401', '403', '404', '405', '500']:
+                status_codes[status_code] = status_codes.get(status_code, 0) + 1
+
+            if idx % 10 == 0:
+                print_metrics(total_file_size, status_codes)
+
+    except KeyboardInterrupt:
+        print_metrics(total_file_size, status_codes)
+        sys.exit(0)
+
 if __name__ == "__main__":
     main()
+
