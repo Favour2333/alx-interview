@@ -1,37 +1,51 @@
 #!/usr/bin/python3
+
 import sys
+import signal
 
-def print_metrics(total_file_size, status_codes):
+# Initialize variables
+total_file_size = 0
+status_code_counts = {200: 0, 301: 0, 400: 0, 401: 0, 403: 0, 404: 0, 405: 0, 500: 0}
+lines_processed = 0
+
+def print_statistics():
+    """Print the computed statistics"""
     print("File size: {}".format(total_file_size))
-    for status_code in sorted(status_codes):
-        print("{}: {}".format(status_code, status_codes[status_code]))
+    for status_code in sorted(status_code_counts):
+        if status_code_counts[status_code] > 0:
+            print("{}: {}".format(status_code, status_code_counts[status_code]))
 
-def main():
-    total_file_size = 0
-    status_codes = {}
+def signal_handler(signal, frame):
+    """Handle the keyboard interruption (CTRL + C)"""
+    print_statistics()
+    sys.exit(0)
 
+# Register the signal handler for keyboard interruption
+signal.signal(signal.SIGINT, signal_handler)
+
+# Process input line by line
+for line in sys.stdin:
+    # Parse the line
     try:
-        for idx, line in enumerate(sys.stdin, 1):
-            data = line.split()
+        parts = line.split()
+        ip_address = parts[0]
+        date = parts[3][1:-1]  # Corrected the date extraction
+        status_code = int(parts[8])
+        file_size = int(parts[9])
+    except IndexError:
+        continue
+    except (ValueError, IndexError):
+        continue
 
-            # Check if the line matches the input format
-            if len(data) != 9 or not data[8].isdigit():
-                continue
+    # Update the metrics
+    total_file_size += file_size
+    status_code_counts[status_code] += 1
+    lines_processed += 1
 
-            file_size = int(data[8])
-            total_file_size += file_size
+    # Print statistics every 10 lines
+    if lines_processed % 10 == 0:
+        print_statistics()
 
-            status_code = data[7]
-            if status_code in ['200', '301', '400', '401', '403', '404', '405', '500']:
-                status_codes[status_code] = status_codes.get(status_code, 0) + 1
-
-            if idx % 10 == 0:
-                print_metrics(total_file_size, status_codes)
-
-    except KeyboardInterrupt:
-        print_metrics(total_file_size, status_codes)
-        sys.exit(0)
-
-if __name__ == "__main__":
-    main()
+# Print the final statistics
+print_statistics()
 
