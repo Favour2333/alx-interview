@@ -15,7 +15,7 @@ def main():
             data = line.split()
 
             # Check if the line matches the input format
-            if len(data) != 9 or data[8].isdigit() is False:
+            if len(data) != 9 or not data[8].isdigit():
                 continue
 
             file_size = int(data[8])
